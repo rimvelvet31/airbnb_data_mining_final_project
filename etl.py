@@ -81,32 +81,37 @@ def etl_pipeline():
     """)
 
     # Insert data into hosts table
-    if not data_exists_in_table('hosts'):
-        for index, row in airbnb[['host_id', 'host_name']].drop_duplicates().iterrows():
-            cur.execute("INSERT INTO hosts (host_id, host_name) VALUES (?, ?)",
-                        (row['host_id'], row['host_name']))
+    for index, row in airbnb[['host_id', 'host_name']].drop_duplicates().iterrows():
+        cur.execute("INSERT INTO hosts (host_id, host_name) VALUES (?, ?)",
+                    (row['host_id'], row['host_name']))
 
     # Insert data into countries table
-    if not data_exists_in_table('countries'):
-        for index, row in airbnb[['country']].drop_duplicates().iterrows():
-            cur.execute(
-                "INSERT INTO countries (country_name) VALUES (?)", (row['country'],))
+    for index, row in airbnb[['country']].drop_duplicates().iterrows():
+        cur.execute(
+            "INSERT INTO countries (country_name) VALUES (?)", (row['country'],))
 
     # Insert data into properties table
-    if not data_exists_in_table('properties'):
-        for index, row in airbnb.iterrows():
-            cur.execute("""
-                INSERT INTO properties (
-                    id, name, rating, reviews, host_id, address, price_local, country_id,
-                    bathrooms, beds, guests, toilets, bedrooms, studios, checkin, checkout
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                        (
-                            row['id'], row['name'], row['rating'], row['reviews'], row['host_id'],
-                            row['address'], row['price_local'], row['country'], row['bathrooms'],
-                            row['beds'], row['guests'], row['toilets'], row['bedrooms'], row['studios'],
-                            str(row['checkin']), str(row['checkout'])
-                        )
-                        )
+    country_id_map = {}
+    cur.execute("SELECT country_id, country_name FROM countries")
+    for country_id, country_name in cur.fetchall():
+        country_id_map[country_name] = country_id
+
+    for index, row in airbnb.iterrows():
+        # Look up the country_id
+        country_id = country_id_map.get(row['country'])
+
+        cur.execute("""
+            INSERT INTO properties (
+                id, name, rating, reviews, host_id, address, price_local, country_id,
+                bathrooms, beds, guests, toilets, bedrooms, studios, checkin, checkout
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (
+                        row['id'], row['name'], row['rating'], row['reviews'], row['host_id'],
+                        row['address'], row['price_local'], country_id, row['bathrooms'],
+                        row['beds'], row['guests'], row['toilets'], row['bedrooms'], row['studios'],
+                        str(row['checkin']), str(row['checkout'])
+                    )
+                    )
 
     # Commit changes and close connection
     conn.commit()
