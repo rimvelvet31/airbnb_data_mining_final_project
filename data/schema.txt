@@ -1,0 +1,30 @@
+CREATE TABLE IF NOT EXISTS hosts (
+    host_id INTEGER PRIMARY KEY,
+    host_name TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS countries (
+    country_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    country_name TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS properties (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    rating REAL,
+    reviews INTEGER,
+    host_id INTEGER,
+    address TEXT,
+    price_local REAL,
+    country_id INTEGER,
+    bathrooms INTEGER,
+    beds INTEGER,
+    guests INTEGER,
+    toilets INTEGER,
+    bedrooms INTEGER,
+    studios INTEGER,
+    checkin TEXT,
+    checkout TEXT,
+    FOREIGN KEY (host_id) REFERENCES hosts(host_id),
+    FOREIGN KEY (country_id) REFERENCES countries(country_id)
+);
